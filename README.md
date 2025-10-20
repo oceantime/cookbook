@@ -6,10 +6,10 @@ This repository contains examples, tutorials, and applications for building with
 
 ## What are you looking for?
 
-- [Fine-tune an LFM2 model](#fine-tuning) - Customize Liquid models to your specific use case
-- [Deploy to an edge device](#edge-deployment) - Run models on mobile, both Android and iOS.
-- [End-to-end tutorials](#tutorials) - Complete walkthroughs from setup to production.
-- [Examples built by our community](#community-examples) - Working demos you can run and modify
+- [Fine-tune an LFM2 model](#fine-tune-an-lfm2-model) - Customize Liquid models to your specific use case
+- [Deploy to an edge device](#deploy-to-an-edge-device) - Run models on mobile, both Android and iOS.
+- [End-to-end tutorials](#end-2-end-tutorials) - Complete walkthroughs from setup to production.
+- [Examples built by our community](#examples-built-by-our-community) - Working demos you can run and modify
 - [API reference](#api-reference) - Detailed documentation for all features
 
 ## Fine-Tune an LFM2 model
@@ -26,22 +26,22 @@ These models are particularly suited for agentic tasks, data extraction, RAG, cr
 |-------|-----------|---------------|
 | [LFM2-8B-A1B](https://huggingface.co/LiquidAI/LFM2-8B-A1B) | Supervised Fine Tuning (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OXLEuSmzF4AjJ7yqRCDTn-ltvFjoGR9j?usp=sharing) |
 |  | Direct Preference Optimization (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Q8hIHIQ8oofshcNYHUcYp1akUcZ-ufSn?usp=sharing) |
-|
+||||
 | [LFM2-2.6B](https://huggingface.co/LiquidAI/LFM2-2.6B) | Supervised Fine Tuning (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1j5Hk_SyBb2soUsuhU0eIEA9GwLNRnElF?usp=sharing) |
 |  | Supervised Fine Tuning (Axolotl) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/155lr5-uYsOJmZfO6_QZPjbs8hA_v8S7t?usp=sharing) |
 |  | Supervised Fine Tuning (Unsloth) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HROdGaPFt1tATniBcos11-doVaH7kOI3?usp=sharing) |
 |  | Direct Preference Optimization (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t?usp=sharing) |
-|
+||||
 | [LFM2-1.2B](https://huggingface.co/LiquidAI/LFM2-1.2B) | Supervised Fine Tuning (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1j5Hk_SyBb2soUsuhU0eIEA9GwLNRnElF?usp=sharing) |
 |  | Supervised Fine Tuning (Axolotl) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/155lr5-uYsOJmZfO6_QZPjbs8hA_v8S7t?usp=sharing) |
 |  | Supervised Fine Tuning (Unsloth) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HROdGaPFt1tATniBcos11-doVaH7kOI3?usp=sharing) |
 |  | Direct Preference Optimization (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t?usp=sharing) |
-|
+||||
 | [LFM2-700M](https://huggingface.co/LiquidAI/LFM2-700M) | Supervised Fine Tuning (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1j5Hk_SyBb2soUsuhU0eIEA9GwLNRnElF?usp=sharing) |
 |  |Supervised Fine Tuning (Axolotl) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/155lr5-uYsOJmZfO6_QZPjbs8hA_v8S7t?usp=sharing) |
 |  |Supervised Fine Tuning (Unsloth) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HROdGaPFt1tATniBcos11-doVaH7kOI3?usp=sharing) |
 | | Direct Preference Optimization (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1MQdsPxFHeZweGsNx4RH7Ia8lG8PiGE1t?usp=sharing) |
-|
+||||
 | [LFM2-350M](https://huggingface.co/LiquidAI/LFM2-350M) | Supervised Fine Tuning (TRL) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1j5Hk_SyBb2soUsuhU0eIEA9GwLNRnElF?usp=sharing) |
 |  |Supervised Fine Tuning (Axolotl) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/155lr5-uYsOJmZfO6_QZPjbs8hA_v8S7t?usp=sharing) |
 |  |Supervised Fine Tuning (Unsloth) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1HROdGaPFt1tATniBcos11-doVaH7kOI3?usp=sharing) |
@@ -89,7 +89,7 @@ Written for Android (Kotlin) and iOS (Swift), the goal of the Edge SDK is to mak
 |  | ShareAI: Website summary generator | [▶️ Go to the code](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/ShareAI) |
 |  | Recipe Generator: Structured output generation with the LEAP SDK | [▶️ Go to the code](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/RecipeGenerator) |
 |  | Visual Language Model example | [▶️ Go to the code](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/Android/VLMExample) |
-|
+||||
 | iOS | LeapChat: A comprehensive chat application demonstrating advanced LeapSDK features including real-time streaming, conversation management, and modern UI components. | [▶️ Go to the code ](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapChatExample) |
 |  | LeapSloganExample: A simple SwiftUI app demonstrating basic LeapSDK integration for text generation.| [▶️ Go to the code](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/LeapChatExample) |
 |  | Recipe Generator: Structured output generation | [▶️ Go to the code](https://github.com/Liquid4All/LeapSDK-Examples/tree/main/iOS/RecipeGenerator) |
