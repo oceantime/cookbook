@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # BrowserGym environment server
+  browsergym:
+    build:
+      context: ./browsergym
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    networks:
+      - training-net
+
+  # GRPO training container
+  training:
+    build:
+      context: .
+      dockerfile: training/Dockerfile
+    depends_on:
+      browsergym:
+        condition: service_healthy
+    environment:
+      - BROWSERGYM_URL=http://browsergym:8080
+      - HF_TOKEN=${HF_TOKEN}
+      - WANDB_API_KEY=${WANDB_API_KEY}
+      - WANDB_DISABLED=true
+    volumes:
+      - ./logs:/workspace/logs
+      - ../checkpoints:/workspace/checkpoints
+      - hf_cache:/hf_cache
+    networks:
+      - training-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  hf_cache:
+
+networks:
+  training-net:
+    driver: bridge
