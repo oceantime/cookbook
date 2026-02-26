@@ -1,8 +1,10 @@
 #########################################################
-# LFM2-350M 本地 GPU 全量微调（大 batch，DGX A100 80GB）
+# LFM2-350M 本地Docker训练配置（完整训练）
+# 修改自 lfm2_350m.yaml，适配Docker Compose环境
 #########################################################
 
 seed: 23
+# resume_from_checkpoint: null
 
 # Language Model parameters
 model_name: LiquidAI/LFM2-350M
@@ -28,28 +30,30 @@ system_prompt: |
 
   Do not include explanations or multiple actions.
 
-# BrowserGym 环境（本地 Docker 服务）
-browsergym_url: http://browsergym:8080
-dataset_size: 200
+# BrowserGym environment (修改为本地Docker容器)
+browsergym_url: http://localhost:8000
+dataset_size: 100  # 完整数据集
 default_goal: Complete the web task successfully.
 
-# 训练超参数（A100 80GB 大 batch 配置）
-learning_rate: 5.0e-6
-warmup_steps: 20
-gradient_checkpointing: true
+# How long and how aggressive do we train?
+learning_rate: 1.0e-6
+warmup_steps: 10
 
-# vLLM 推理（更多显存）
-per_device_train_batch_size: 2
-num_generations: 8
-generation_batch_size: 8
-max_steps: 20
-max_completion_length: 64
+# Optimization
+# gradient_checkpointing: true
+
+# vLLM inference (针对NVIDIA GB10优化)
+per_device_train_batch_size: 1
+num_generations: 4  # 完整训练增加生成数
+generation_batch_size: 4
+max_steps: 5   # 每个 episode 最多走 5 步（超时则放弃）
+max_completion_length: 32
 use_vllm: true
 vllm_mode: "colocate"
-vllm_gpu_memory_utilization: 0.3
+vllm_gpu_memory_utilization: 0.3  # GB10 验证可用配置
 
-# 实验追踪
-wandb_enabled: false
-wandb_project_name: "browser-control-fine-tune-with-grpo"
+# Experiment tracking (本地TensorBoard)
+wandb_enabled: true  # 复用字段名，实际使用TensorBoard
+wandb_project_name: "browser-control-local-full"
 logging_steps: 1
-push_to_hf: false
+push_to_hf: false  # 本地训练不上传

@@ -1,54 +1,59 @@
 #########################################################
-# LFM2-350M 本地 GPU 全量微调（DGX / 本地 GPU 服务器）
+# LFM2-350M 本地Docker训练配置（调试模式）
+# 修改自 lfm2_350m_debug.yaml，适配Docker Compose环境
 #########################################################
 
 seed: 23
+# resume_from_checkpoint: null
 
 # Language Model parameters
 model_name: LiquidAI/LFM2-350M
 max_seq_length: 2048
 system_prompt: |
-  You control a web browser through BrowserGym actions.
-  You must complete the given web task by interacting with the page.
+  You are a web browser automation agent using BrowserGym.
 
-  Available actions:
-  - noop() - Do nothing
-  - click(bid) - Click element with BrowserGym ID (the number in brackets)
-  - fill(bid, text) - Fill input field with text
-  - send_keys(text) - Send keyboard input
-  - scroll(direction) - Scroll up/down
+  The page observation shows accessible elements like:
+    [13] button 'Click Me!'
+    [42] textbox 'Search'
+  The number in brackets is the bid (browser element ID).
 
-  The page structure shows elements as: [bid] element_type 'element_text'
-  For example: [13] button 'Click Me!' means bid='13'
+  Available actions (use EXACTLY this syntax):
+    click('13')          - click element with bid 13
+    fill('42', 'hello')  - type 'hello' into element with bid 42
+    noop()               - do nothing
 
-  Reply with exactly ONE action on a single line, e.g.:
+  RULES:
+  - Output ONLY a single action on one line, nothing else
+  - Use the bid NUMBER from the observation (e.g., '13', not 'Click Me!')
+  - Do NOT add explanations, comments, or multiple lines
+
+  Example: if observation shows "[13] button 'Click Me!'" and goal is to click it:
   click('13')
-  fill('42', 'hello world')
-  noop()
 
-  Do not include explanations or multiple actions.
-
-# BrowserGym 环境（本地 Docker 服务）
-browsergym_url: http://browsergym:8080
-dataset_size: 100
+# BrowserGym environment (修改为本地Docker容器)
+browsergym_url: http://localhost:8000
+dataset_size: 10
 default_goal: Complete the web task successfully.
 
-# 训练超参数
+# How long and how aggressive do we train?
 learning_rate: 5.0e-6
 warmup_steps: 10
 
-# vLLM 推理
+# Optimization
+# gradient_checkpointing: true
+
+# vLLM inference (针对NVIDIA GB10优化)
 per_device_train_batch_size: 1
-num_generations: 4
-generation_batch_size: 4
-max_steps: 10
+num_generations: 2
+generation_batch_size: 2
+max_steps: 1
 max_completion_length: 32
 use_vllm: true
-vllm_mode: "colocate"
-vllm_gpu_memory_utilization: 0.2
+vllm_mode: "colocate"        # colocate 模式：vLLM 与训练共享同一 GPU 进程，不调用 init_communicator
+vllm_gpu_memory_utilization: 0.3  # colocate 模式下直接在 GRPOConfig 中生效
 
-# 实验追踪（本地可关闭 WandB）
-wandb_enabled: false
-wandb_project_name: "browser-control-fine-tune-with-grpo"
+# Experiment tracking (本地TensorBoard)
+wandb_enabled: true  # 复用字段名，实际使用TensorBoard
+wandb_project_name: "browser-control-local"
 logging_steps: 1
-push_to_hf: false
+push_to_hf: false  # 本地训练不上传

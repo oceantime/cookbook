@@ -1,5 +1,6 @@
 #########################################################
-# LFM2-350M 本地 GPU LoRA 微调（省显存，适合 24GB 以下 GPU）
+# LFM2-350M 本地Docker训练配置（LoRA参数高效微调）
+# 修改自 lfm2_350m_lora.yaml，适配Docker Compose环境
 #########################################################
 
 seed: 23
@@ -28,26 +29,26 @@ system_prompt: |
 
   Do not include explanations or multiple actions.
 
-# BrowserGym 环境（本地 Docker 服务）
-browsergym_url: http://browsergym:8080
+# BrowserGym environment (修改为本地Docker容器)
+browsergym_url: http://browsergym:8000
 dataset_size: 100
 default_goal: Complete the web task successfully.
 
-# 训练超参数（LoRA 适合更高学习率）
-learning_rate: 1.0e-4
+# Training hyperparameters (adjusted for LoRA)
+learning_rate: 1.0e-4  # Higher LR suitable for LoRA (fewer trainable params)
 warmup_steps: 10
 
-# vLLM 推理
+# vLLM inference (针对NVIDIA GB10优化)
 per_device_train_batch_size: 1
 num_generations: 4
 generation_batch_size: 4
-max_steps: 10
+max_steps: 100  # 完整训练步数
 max_completion_length: 32
 use_vllm: true
 vllm_mode: "colocate"
-vllm_gpu_memory_utilization: 0.15
+vllm_gpu_memory_utilization: 0.15  # Slightly increased to accommodate LoRA adapters
 
-# LoRA 配置（ENABLED）
+# LoRA configuration (ENABLED - 内存高效)
 use_peft: true
 lora_r: 8
 lora_alpha: 16
@@ -63,8 +64,8 @@ lora_target_modules:
   - "up_proj"
   - "down_proj"
 
-# 实验追踪
-wandb_enabled: false
-wandb_project_name: "browser-control-fine-tune-with-grpo"
+# Experiment tracking (本地TensorBoard)
+wandb_enabled: true  # 复用字段名，实际使用TensorBoard
+wandb_project_name: "browser-control-local-lora"
 logging_steps: 1
-push_to_hf: false
+push_to_hf: false  # 本地训练不上传

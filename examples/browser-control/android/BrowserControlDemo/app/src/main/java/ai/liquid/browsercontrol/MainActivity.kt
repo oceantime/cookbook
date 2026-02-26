@@ -1,79 +1,56 @@
 package ai.liquid.browsercontrol
 
+import ai.liquid.browsercontrol.ui.BrowserControlScreen
+import ai.liquid.browsercontrol.viewmodel.BrowserViewModel
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import android.os.Environment
+import android.provider.Settings
+import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.material3.MaterialTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
- * Main Activity demonstrating on-device browser control with LFM2-350M.
+ * MainActivity - Browser Control Demo 入口
  *
- * NOTE: This is a demo scaffold. To enable actual inference:
- * 1. Add LEAP SDK dependency to build.gradle.kts
- * 2. Place a GGUF model in assets/ or download at runtime
- * 3. Uncomment the LlmInference calls in BrowserAgent
+ * 阶段四: 完整UI实现
+ * - BrowserControlScreen: WebView + 日志面板 + 控制按钮
+ * - BrowserViewModel: 推理主循环
  */
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var agent: BrowserAgent
-    private lateinit var etGoal: EditText
-    private lateinit var etDom: EditText
-    private lateinit var tvAction: TextView
-    private lateinit var btnRun: Button
-    private lateinit var progressBar: ProgressBar
-
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        etGoal = findViewById(R.id.etGoal)
-        etDom = findViewById(R.id.etDom)
-        tvAction = findViewById(R.id.tvAction)
-        btnRun = findViewById(R.id.btnRun)
-        progressBar = findViewById(R.id.progressBar)
+        // Android 11+（API 30+）需要 MANAGE_EXTERNAL_STORAGE 才能读取 /sdcard 根目录文件
+        requestManageExternalStorageIfNeeded()
 
-        // Initialize agent (loads model from assets)
-        lifecycleScope.launch {
-            initAgent()
-        }
-
-        btnRun.setOnClickListener {
-            val goal = etGoal.text.toString().trim()
-            val dom = etDom.text.toString().trim()
-            if (goal.isNotEmpty() && dom.isNotEmpty()) {
-                runInference(goal, dom)
+        setContent {
+            MaterialTheme {
+                val viewModel: BrowserViewModel = viewModel()
+                BrowserControlScreen(viewModel)
             }
         }
     }
 
-    private suspend fun initAgent() {
-        withContext(Dispatchers.IO) {
-            // For demo: use mock agent (no actual model loaded)
-            agent = BrowserAgent.createMock(this@MainActivity)
-        }
-        btnRun.isEnabled = true
-        tvAction.text = "Model ready. Enter a goal and DOM content to run inference."
-    }
-
-    private fun runInference(goal: String, dom: String) {
-        btnRun.isEnabled = false
-        progressBar.visibility = View.VISIBLE
-        tvAction.text = "Running inference..."
-
-        lifecycleScope.launch {
-            val action = withContext(Dispatchers.IO) {
-                agent.executeStep(dom, goal)
+    private fun requestManageExternalStorageIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Log.i("MainActivity", "请求 MANAGE_EXTERNAL_STORAGE 权限")
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // 部分设备不支持精确跳转，退回到通用页面
+                    Log.w("MainActivity", "无法直接跳转权限页，尝试通用页面: ${e.message}")
+                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                }
             }
-            tvAction.text = "Action: $action"
-            btnRun.isEnabled = true
-            progressBar.visibility = View.GONE
         }
     }
 }
