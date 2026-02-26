@@ -1,74 +1,128 @@
-# 错误处理模式
+# Skill: 常见错误处理模式
 
-## BrowserGym 连接错误
+**类别**: 调试 / 错误处理  
+**适用场景**: browser-control 训练和构建中常见错误的处理方式  
+**创建时间**: 2026-02-22
 
-### 症状
-```
-ConnectionRefusedError: [Errno 111] Connection refused
-requests.exceptions.ConnectionError: Failed to establish connection to http://localhost:8080
-```
+---
 
-### 解决
-1. 确认 BrowserGym 服务已启动：`docker compose ps`
-2. 等待服务健康检查通过：`curl http://localhost:8080/health`
-3. 检查 `browsergym_url` 配置是否正确
+## 1. subprocess Unicode 错误
 
-## vLLM OOM 错误
+**问题**: `llama-quantize` 输出非 UTF-8 的进度条
 
-### 症状
-```
-torch.cuda.OutOfMemoryError: CUDA out of memory
-RuntimeError: CUDA error: device-side assert triggered
+```python
+result = subprocess.run(cmd, capture_output=True, text=True)
+# UnicodeDecodeError!
 ```
 
-### 解决
-1. 降低 `vllm_gpu_memory_utilization`（如 0.1 → 0.05）
-2. 减小 `per_device_train_batch_size`（改为 1）
-3. 减小 `generation_batch_size`（改为 2）
-4. 使用 LoRA 而非全量微调
-5. 启用 `gradient_checkpointing: true`
+**解决**:
 
-## WandB 认证失败
-
-### 症状
-```
-wandb: ERROR Failed to log in. Please set WANDB_API_KEY
+```python
+result = subprocess.run(cmd, capture_output=True, text=True, errors='ignore')
 ```
 
-### 解决
+---
+
+## 2. Modal Volume 并发写入
+
+**问题**: 多次写入后未 commit，导致数据丢失
+
+```python
+# 错误方式：忘记 commit
+volume.put_file("file1.txt", "/remote/path1")
+# 数据可能丢失！
+```
+
+**解决**:
+
+```python
+# 方式1: 手动 commit
+volume.put_file("file1.txt", "/remote/path1")
+volume.commit()
+
+# 方式2: batch_upload 上下文管理器（自动 commit）
+with volume.batch_upload() as batch:
+    batch.put_file("file1.txt", "/remote/path1")
+    batch.put_file("file2.txt", "/remote/path2")
+```
+
+---
+
+## 3. BrowserGym HF Space 休眠
+
+**问题**: HuggingFace Space 长时间不活跃后进入休眠
+
+```python
+# 连接超时
+env = BrowserGymEnv(...)  # ConnectionError!
+```
+
+**解决**:
+
+```python
+import time
+
+try:
+    env = BrowserGymEnv(...)
+except ConnectionError:
+    print("Waiting for HF Space to wake up...")
+    time.sleep(30)
+    env = BrowserGymEnv(...)  # 重试
+```
+
+---
+
+## 4. Kotlin K2 编译器 FIR 崩溃
+
+**问题**: 第三方 SDK 使用较新 Kotlin 编译，K2 编译器检测到版本不兼容时内部崩溃
+
+```
+FileAnalysisException: source must not be null
+at FirIncompatibleClassExpressionChecker.checkSourceElement
+```
+
+**解决** （`app/build.gradle.kts`）:
+
+```kotlin
+kotlinOptions {
+    jvmTarget = "17"
+    freeCompilerArgs += listOf("-Xskip-metadata-version-check")
+}
+```
+
+---
+
+## 5. Android 构建版本不兼容
+
+**问题**: Java/Gradle/AGP/SDK 版本不匹配导致构建失败
+
+**解决**: 按版本兼容性矩阵升级，详见 `.vscode/skills/learned/android-build-compatibility.md`
+---
+
+## 6. unsloth GGUF 导出失败（Modal / Docker 环境）
+
+**问题**: 在 Modal 或 Docker 中调用 `model.save_pretrained_gguf()` 报错
+
+```
+RuntimeError: llama.cpp folder 'llama.cpp' does not exist in /root
+```
+
+或：
+```
+[FAIL] Command `uv pip install gguf protobuf` failed: error: No virtual environment found
+```
+
+**根本原因**: unsloth 的 GGUF 导出是对 llama.cpp 的封装，依赖特定路径和 Python 环境，在容器内难以满足。
+
+**解决**: 跳过 unsloth，**直接使用 llama.cpp 工具链**：
+
 ```bash
-# Modal 构建
-modal secret create wandb-secret WANDB_API_KEY=<your-key>
+# Step 1: safetensors → F16 GGUF
+python llama.cpp/convert_hf_to_gguf.py checkpoint_dir \
+    --outfile model-f16.gguf --outtype f16
 
-# 本地构建
-echo "WANDB_API_KEY=<your-key>" >> .env
-# 或关闭 WandB：
-# wandb_enabled: false
+# Step 2: 量化
+llama.cpp/build/bin/llama-quantize model-f16.gguf model-q8_0.gguf Q8_0
 ```
 
-## Docker root 权限文件冲突
-
-### 症状
-```
-error: open("docker/logs/events.out.tfevents..."): Permission denied
-```
-
-### 解决
-将 `docker/logs/` 加入 `.gitignore`：
-```
-docker/logs/
-```
-不要尝试 `git rm` 这些文件，会因权限报错。
-
-## GRPO 训练不收敛
-
-### 症状
-- reward 始终为 0 或波动极大
-- loss 不下降
-
-### 解决
-1. 检查 BrowserGym 任务是否太难（先用 miniwob++ 验证）
-2. 增大 `num_generations`（从 4 → 8）
-3. 降低 `learning_rate`（从 5e-6 → 1e-6）
-4. 增加 `warmup_steps`（从 10 → 50）
-5. 检查 `system_prompt` 是否清晰描述了动作格式
+优势：减少依赖层次，错误易定位，适用于任何环境（本地/Modal/Docker）。
