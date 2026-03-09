@@ -21,9 +21,10 @@ services:
       - BROWSERGYM_BENCHMARK=miniwob
       - BROWSERGYM_HEADLESS=true
       - BROWSERGYM_PORT=8000
-      - MINIWOB_URL=http://localhost:9000/miniwob/
+      - MINIWOB_URL=http://miniwob-server:8080/miniwob/
     networks:
       - training-net
+      - miniwob-net
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -113,3 +114,6 @@ volumes:
 networks:
   training-net:
     driver: bridge
+  miniwob-net:
+    external: true
+    name: miniwob_default  # 由 docker/miniwob/docker-compose.yml 创建的网络

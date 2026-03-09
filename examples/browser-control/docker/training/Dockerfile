@@ -1,29 +1,33 @@
 # syntax=docker/dockerfile:1
-# GPU训练容器镜像 (第12次构建)
-# 策略：从已有镜像复用 Python 3.12 + 所有 pip 包，只新增 triton 3.6.0
+# GPU训练容器镜像 (第14次构建 - 基于 flat2 镜像，真正单层压平)
+# 策略：从 docker-training:flat2（export/import 压成1层）复用 Python 3.12 + 所有 pip 包
 # 基于CUDA 12.8 + Ubuntu 22.04
 # vllm 0.12.0 需要 torch==2.9.0，torch 2.9.0 aarch64 CUDA wheel 只有 cu128 版本
 # 宿主机驱动 580（CUDA 13.0）向下兼容，容器内 CUDA 12.8 完全支持 GB10
 
-# 第一阶段：从已有镜像中提取所有已安装的包（复用缓存，跳过漫长的 PPA/pip 下载）
-FROM docker-training:latest AS base
-
-# 第二阶段：最终镜像，基于相同 CUDA 基础镜像
-FROM docker-training:latest
+FROM docker-training:flat2
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHON_VERSION=3.12 \
     HF_HOME=/hf_model_cache \
     UV_SYSTEM_PYTHON=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    http_proxy="" \
+    https_proxy="" \
+    HTTP_PROXY="" \
+    HTTPS_PROXY="" \
+    ALL_PROXY="" \
+    all_proxy=""
 
 # 换用清华 Ubuntu 镜像源（加速 apt 下载）
 RUN sed -i 's|http://ports.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list 2>/dev/null || true && \
     sed -i 's|http://security.ubuntu.com|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list 2>/dev/null || true
 
-# 配置 pip 使用清华 PyPI 镜像
-RUN python3.12 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
-    python3.12 -m pip config set global.extra-index-url https://pypi.org/simple
+# 清除可能残留的代理配置，然后配置 pip 使用清华 PyPI 镜像
+RUN python3.12 -m pip config unset global.proxy 2>/dev/null || true && \
+    python3.12 -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    python3.12 -m pip config set global.extra-index-url https://pypi.org/simple && \
+    pip3 config unset global.proxy 2>/dev/null || true
 
 # 升级 triton 到 3.6.0，以支持 sm_121a (GB10 Blackwell CC 12.1)
 # 旧镜像中 vllm 0.12.0 安装的 triton 3.5.0 生成 PTX 8.5，不支持 sm_121a
