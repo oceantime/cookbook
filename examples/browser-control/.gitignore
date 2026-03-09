@@ -9,6 +9,10 @@ dist/
 # Env
 .env
 
+# Workflow metadata
+.project/
+.learnings/
+
 # Model files
 checkpoints/
 gguf_models/
